@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+
+/target/
+/crates/*/target/
+
+/.cyclops/
+*.log
+*.tmp
