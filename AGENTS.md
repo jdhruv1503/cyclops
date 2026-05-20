@@ -4,7 +4,7 @@ Guidance for Codex and other coding agents working in this repository.
 
 ## Current State
 
-- This repository currently contains a minimal Rust Cargo workspace and a `cyclops` crate with CLI parsing, error types, event schema serialization types, event clock support, and bounded async JSONL event emission.
+- This repository currently contains a minimal Rust Cargo workspace and a `cyclops` crate with CLI parsing, error types, event schema serialization types, event clock support, bounded async JSONL event emission, and worktree-rooted path safety helpers.
 - `PLAN.md` is the long-form design source of truth.
 - There is no CI config, script directory, agent loop, durable session log, LiteLLM client, tool system, or integration test harness yet.
 - `PLAN.md` is the source of truth for the intended Cyclops architecture, milestones, file layout, event schema, and acceptance gates.
