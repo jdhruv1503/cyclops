@@ -4,7 +4,7 @@ Guidance for Codex and other coding agents working in this repository.
 
 ## Current State
 
-- This repository currently contains a minimal Rust Cargo workspace and a `cyclops` crate with CLI parsing, error types, event schema serialization types, event clock support, bounded async JSONL event emission, worktree-rooted path safety helpers, and OpenAI-shape chat message/tool request serialization types.
+- This repository currently contains a minimal Rust Cargo workspace and a `cyclops` crate with CLI parsing, error types, event schema serialization types, event clock support, bounded async JSONL event emission, worktree-rooted path safety helpers, OpenAI-shape chat message/tool request serialization types, and a tuned Hyper HTTP/1.1 transport helper.
 - `PLAN.md` is the long-form design source of truth.
 - There is no CI config, script directory, agent loop, durable session log, LiteLLM client, tool system, or integration test harness yet.
 - `PLAN.md` is the source of truth for the intended Cyclops architecture, milestones, file layout, event schema, and acceptance gates.
@@ -113,5 +113,5 @@ A Codex task in this repo is done when:
 - No package manager or Rust toolchain version is pinned yet.
 - No CI provider or workflow exists yet.
 - No scripts, fixtures, or full generated-file policy exist yet.
-- No agent loop, tools, model transport, durable session logs, or live event fanout exist yet.
+- No agent loop, tools, LiteLLM client, durable session logs, or live event fanout exist yet.
 - Live LiteLLM model routes and required environment variables are not captured in repo config yet.
