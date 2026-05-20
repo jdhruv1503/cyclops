@@ -2,6 +2,7 @@ use serde::de::{self, Deserializer};
 use serde::ser::{SerializeStruct, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ChatMessage {
@@ -54,6 +55,76 @@ pub enum ToolCallKind {
 pub struct ToolFunctionCall {
     pub name: String,
     pub arguments: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ToolDef {
+    #[serde(rename = "type")]
+    pub kind: ToolDefKind,
+    pub function: ToolFunctionDef,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolDefKind {
+    Function,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ToolFunctionDef {
+    pub name: String,
+    pub description: String,
+    pub parameters: JsonSchema,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub strict: Option<bool>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
+pub enum JsonSchema {
+    Object(JsonObjectSchema),
+    String(JsonStringSchema),
+    Integer(JsonNumberSchema),
+    Number(JsonNumberSchema),
+    Boolean(JsonBooleanSchema),
+    Array(JsonArraySchema),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JsonObjectSchema {
+    pub properties: BTreeMap<String, JsonSchema>,
+    pub required: Vec<String>,
+    #[serde(rename = "additionalProperties")]
+    pub additional_properties: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JsonStringSchema {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(rename = "enum", skip_serializing_if = "Option::is_none")]
+    pub enum_values: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JsonNumberSchema {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JsonBooleanSchema {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JsonArraySchema {
+    pub items: Box<JsonSchema>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 impl ChatMessage {
@@ -280,6 +351,7 @@ impl From<ValueOrUserBlocks> for String {
 #[cfg(test)]
 mod tests {
     use serde_json::{json, Value};
+    use std::collections::BTreeMap;
 
     use super::*;
 
@@ -478,6 +550,46 @@ mod tests {
                 .unwrap(),
             block
         );
+    }
+
+    #[test]
+    fn tool_def_serializes_as_openai_function_tool_schema() {
+        let mut properties = BTreeMap::new();
+        properties.insert(
+            "path".to_string(),
+            JsonSchema::String(JsonStringSchema {
+                description: Some("Worktree-relative path to read.".to_string()),
+                enum_values: None,
+            }),
+        );
+        properties.insert(
+            "reason".to_string(),
+            JsonSchema::String(JsonStringSchema {
+                description: Some("Short reason for reading this file.".to_string()),
+                enum_values: None,
+            }),
+        );
+
+        let tool = ToolDef {
+            kind: ToolDefKind::Function,
+            function: ToolFunctionDef {
+                name: "read".to_string(),
+                description: "Read a UTF-8 file from the worktree.".to_string(),
+                parameters: JsonSchema::Object(JsonObjectSchema {
+                    properties,
+                    required: vec!["path".to_string()],
+                    additional_properties: false,
+                    description: None,
+                }),
+                strict: Some(true),
+            },
+        };
+
+        let expected = r#"{"type":"function","function":{"name":"read","description":"Read a UTF-8 file from the worktree.","parameters":{"type":"object","properties":{"path":{"type":"string","description":"Worktree-relative path to read."},"reason":{"type":"string","description":"Short reason for reading this file."}},"required":["path"],"additionalProperties":false},"strict":true}}"#;
+
+        let actual = serde_json::to_string(&tool).unwrap();
+        assert_eq!(actual, expected);
+        assert_eq!(serde_json::from_str::<ToolDef>(expected).unwrap(), tool);
     }
 
     fn assert_round_trip(message: ChatMessage) {
