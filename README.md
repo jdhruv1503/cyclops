@@ -1,6 +1,6 @@
 # Cyclops
 
-Cyclops is an early Rust coding-agent harness. The repository has a minimal Cargo workspace and `cyclops` CLI parser; agent behavior is still planned in `PLAN.md` and has not been implemented yet.
+Cyclops is an early Rust coding-agent harness. The repository has a minimal Cargo workspace, `cyclops` CLI parser, and typed event schema; agent behavior is still planned in `PLAN.md` and has not been implemented yet.
 
 Start with:
 
@@ -44,6 +44,7 @@ cargo test
 
 - Key design document: `PLAN.md`.
 - Current workspace members: `crates/cyclops`.
+- Current implemented internals: CLI parsing, error types, and event schema serialization types.
 - `Cargo.lock` is tracked for reproducible binary builds.
 - Planned implementation language: Rust.
 - Planned future workspace members: `crates/cyclops-web` and later `crates/cyclops-tui`.
