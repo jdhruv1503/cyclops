@@ -2,6 +2,7 @@ pub mod config;
 pub mod error;
 pub mod events;
 pub mod fs;
+pub mod model;
 
 pub const CRATE_NAME: &str = "cyclops";
 

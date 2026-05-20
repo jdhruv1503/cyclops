@@ -1,6 +1,6 @@
 # Cyclops
 
-Cyclops is an early Rust coding-agent harness. The repository has a minimal Cargo workspace, `cyclops` CLI parser, typed event schema, event clock support, an async JSONL event emitter, and worktree-rooted path safety helpers; agent behavior is still planned in `PLAN.md` and has not been implemented yet.
+Cyclops is an early Rust coding-agent harness. The repository has a minimal Cargo workspace, `cyclops` CLI parser, typed event schema, event clock support, an async JSONL event emitter, worktree-rooted path safety helpers, and OpenAI-shape chat message serialization types; agent behavior is still planned in `PLAN.md` and has not been implemented yet.
 
 Start with:
 
@@ -44,7 +44,7 @@ cargo test
 
 - Key design document: `PLAN.md`.
 - Current workspace members: `crates/cyclops`.
-- Current implemented internals: CLI parsing, error types, event schema serialization types, event clock timestamps, bounded async JSONL event emission, and worktree-rooted path safety helpers.
+- Current implemented internals: CLI parsing, error types, event schema serialization types, event clock timestamps, bounded async JSONL event emission, worktree-rooted path safety helpers, and chat message serialization types.
 - `Cargo.lock` is tracked for reproducible binary builds.
 - Planned implementation language: Rust.
 - Planned future workspace members: `crates/cyclops-web` and later `crates/cyclops-tui`.
