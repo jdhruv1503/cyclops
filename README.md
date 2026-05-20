@@ -1,6 +1,6 @@
 # Cyclops
 
-Cyclops is currently a design-plan repository for a planned Rust coding-agent harness. There is no implemented application, Cargo workspace, CI, or test harness yet.
+Cyclops is an early Rust coding-agent harness. The repository now has a minimal Cargo workspace and `cyclops` crate stub; agent behavior is still planned in `PLAN.md` and has not been implemented yet.
 
 Start with:
 
@@ -9,7 +9,7 @@ Start with:
 
 ## Current Setup
 
-No package setup is required yet because there is no source tree or package manifest.
+Install a Rust toolchain with Cargo. This workspace was verified with Fedora packages `rust` and `cargo` version 1.95.0.
 
 Local Fireworks credentials can be provided with an untracked `.env` file:
 
@@ -28,15 +28,23 @@ git status --short
 
 ## Build And Test
 
-No build, test, lint, format, or typecheck commands are currently available.
+Verified commands:
 
-`PLAN.md` documents future acceptance commands such as `cargo build --release`, `cargo test`, and `./target/release/cyclops --help`; treat them as planned until `Cargo.toml` and the relevant crates exist.
+```bash
+cargo fmt --check
+cargo build --release
+cargo test
+./target/release/cyclops
+```
+
+`./target/release/cyclops` is currently a T01 stub that exits 0 and emits no output.
 
 ## Repository Status
 
-- Current tracked project document: `PLAN.md`.
+- Key design document: `PLAN.md`.
+- Current workspace members: `crates/cyclops`.
 - Planned implementation language: Rust.
-- Planned workspace members: `crates/cyclops`, `crates/cyclops-web`, and later `crates/cyclops-tui`.
+- Planned future workspace members: `crates/cyclops-web` and later `crates/cyclops-tui`.
 - Planned runtime integration: LiteLLM-proxied streaming chat completions.
 
-When implementation begins, update this README with verified setup, build, test, lint, format, typecheck, and smoke-test commands.
+When more implementation lands, update this README with any new verified setup, build, test, lint, format, typecheck, and smoke-test commands.

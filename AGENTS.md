@@ -4,9 +4,9 @@ Guidance for Codex and other coding agents working in this repository.
 
 ## Current State
 
-- This repository currently contains a design plan, not an implemented application.
-- The only tracked project document discovered during the docs audit is `PLAN.md`.
-- There is no `Cargo.toml`, `README.md` history, CI config, package manifest, script directory, source tree, or test harness yet.
+- This repository currently contains a minimal Rust Cargo workspace and a `cyclops` crate stub.
+- `PLAN.md` is the long-form design source of truth.
+- There is no CI config, script directory, real CLI, agent loop, LiteLLM client, tool system, or integration test harness yet.
 - `PLAN.md` is the source of truth for the intended Cyclops architecture, milestones, file layout, event schema, and acceptance gates.
 
 ## Project Summary
@@ -22,7 +22,7 @@ Cyclops is planned as a single-binary Rust coding-agent harness. The design in `
 - JSONL event output and durable session logs.
 - A phased roadmap from v0 working agent through v2 memory experiments.
 
-Do not assume these files exist until they have actually been created.
+Do not assume future crates or modules exist until they have actually been created.
 
 ## Before Editing
 
@@ -47,7 +47,16 @@ Do not assume these files exist until they have actually been created.
 
 ## Commands
 
-No project build, test, lint, format, or typecheck command is currently runnable because the Rust workspace has not been created.
+The Rust workspace is present. Verified commands:
+
+```bash
+cargo fmt --check
+cargo build --release
+cargo test
+./target/release/cyclops
+```
+
+The current T01 binary is a stub: `./target/release/cyclops` exits 0 and emits no output.
 
 Use these discovery commands now:
 
@@ -57,15 +66,7 @@ find . -maxdepth 4 -type f -print | sort
 git status --short
 ```
 
-Commands documented in `PLAN.md` are future acceptance commands and should be treated as planned until matching files exist:
-
-```bash
-cargo build --release
-cargo test
-./target/release/cyclops --help
-```
-
-When the Cargo workspace is added, update this section with the exact working build, test, lint, format, and typecheck commands verified against the repo.
+Commands in `PLAN.md` for later tasks remain planned until the matching source files and behavior exist. For example, `./target/release/cyclops --help` belongs to T02, not T01.
 
 ## Documentation Conventions
 
@@ -80,6 +81,7 @@ When the Cargo workspace is added, update this section with the exact working bu
 These conventions are derived from `PLAN.md` and apply once the relevant files exist:
 
 - Rust with Tokio is the implementation stack.
+- Keep the T01 crate stub minimal until later tasks add CLI parsing and agent behavior.
 - Prompts and tools are hardcoded in source, not loaded from YAML/TOML/templates.
 - The agent core should remain usable without the web UI or future TUI.
 - Provider-specific model features belong behind explicit capability checks.
@@ -108,6 +110,6 @@ A Codex task in this repo is done when:
 
 - No package manager or Rust toolchain version is pinned yet.
 - No CI provider or workflow exists yet.
-- No runnable build, test, lint, format, or typecheck command exists yet.
-- No source files, scripts, fixtures, or generated-file ignore policy exist yet.
+- No scripts, fixtures, or full generated-file policy exist yet.
+- No real CLI, config model, agent loop, tools, events, model transport, or session logs exist yet.
 - Live LiteLLM model routes and required environment variables are not captured in repo config yet.
