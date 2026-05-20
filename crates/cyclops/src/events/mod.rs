@@ -1,4 +1,5 @@
 pub mod clock;
+pub mod emitter;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -8,6 +9,34 @@ pub struct EventMeta {
     pub ts_ns: u64,
     pub ts_wall: String,
     pub seq: u64,
+}
+
+impl Event {
+    pub(crate) fn set_meta(&mut self, next_meta: EventMeta) {
+        let meta = match self {
+            Self::TaskStart { meta, .. }
+            | Self::TaskEnd { meta, .. }
+            | Self::TurnStart { meta, .. }
+            | Self::TurnEnd { meta, .. }
+            | Self::LlmRequest { meta, .. }
+            | Self::LlmFirstToken { meta, .. }
+            | Self::TextDelta { meta, .. }
+            | Self::ThinkingDelta { meta, .. }
+            | Self::ToolUseStart { meta, .. }
+            | Self::ToolInputDelta { meta, .. }
+            | Self::ToolDispatch { meta, .. }
+            | Self::ToolDispatchCancel { meta, .. }
+            | Self::ToolResult { meta, .. }
+            | Self::AssistantMessage { meta, .. }
+            | Self::CompletionSignal { meta, .. }
+            | Self::MemoryCompaction { meta, .. }
+            | Self::MemoryFactWrite { meta, .. }
+            | Self::MemoryFileCacheStats { meta, .. }
+            | Self::Cancel { meta, .. }
+            | Self::Error { meta, .. } => meta,
+        };
+        *meta = next_meta;
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
