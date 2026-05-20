@@ -4,9 +4,9 @@ Guidance for Codex and other coding agents working in this repository.
 
 ## Current State
 
-- This repository currently contains a minimal Rust Cargo workspace and a `cyclops` crate stub.
+- This repository currently contains a minimal Rust Cargo workspace and a `cyclops` crate with CLI parsing.
 - `PLAN.md` is the long-form design source of truth.
-- There is no CI config, script directory, real CLI, agent loop, LiteLLM client, tool system, or integration test harness yet.
+- There is no CI config, script directory, agent loop, LiteLLM client, tool system, or integration test harness yet.
 - `PLAN.md` is the source of truth for the intended Cyclops architecture, milestones, file layout, event schema, and acceptance gates.
 
 ## Project Summary
@@ -53,10 +53,11 @@ The Rust workspace is present. Verified commands:
 cargo fmt --check
 cargo build --release
 cargo test
-./target/release/cyclops
+./target/release/cyclops --help
+./target/release/cyclops "fix it" --worktree /tmp/wt --model accounts/fireworks/routers/kimi-k2p6-turbo
 ```
 
-The current T01 binary is a stub: `./target/release/cyclops` exits 0 and emits no output.
+The current T02 binary parses CLI flags and exits 0 after config parsing when required arguments are present. A no-arg invocation exits 2 with Clap usage because task, `--worktree`, and `--model` are required.
 
 Use these discovery commands now:
 
@@ -66,7 +67,7 @@ find . -maxdepth 4 -type f -print | sort
 git status --short
 ```
 
-Commands in `PLAN.md` for later tasks remain planned until the matching source files and behavior exist. For example, `./target/release/cyclops --help` belongs to T02, not T01.
+Commands in `PLAN.md` for later tasks remain planned until the matching source files and behavior exist.
 
 ## Documentation Conventions
 
@@ -81,7 +82,7 @@ Commands in `PLAN.md` for later tasks remain planned until the matching source f
 These conventions are derived from `PLAN.md` and apply once the relevant files exist:
 
 - Rust with Tokio is the implementation stack.
-- Keep the T01 crate stub minimal until later tasks add CLI parsing and agent behavior.
+- Keep the crate minimal until later tasks add agent behavior.
 - Prompts and tools are hardcoded in source, not loaded from YAML/TOML/templates.
 - The agent core should remain usable without the web UI or future TUI.
 - Provider-specific model features belong behind explicit capability checks.
@@ -112,5 +113,5 @@ A Codex task in this repo is done when:
 - No package manager or Rust toolchain version is pinned yet.
 - No CI provider or workflow exists yet.
 - No scripts, fixtures, or full generated-file policy exist yet.
-- No real CLI, config model, agent loop, tools, events, model transport, or session logs exist yet.
+- No agent loop, tools, events, model transport, or session logs exist yet.
 - Live LiteLLM model routes and required environment variables are not captured in repo config yet.

@@ -1,6 +1,9 @@
+pub mod config;
+
 pub const CRATE_NAME: &str = "cyclops";
 
-pub fn run() -> i32 {
+pub fn run(config: config::Config) -> i32 {
+    let _config = config;
     0
 }
 
@@ -11,6 +14,15 @@ mod tests {
     #[test]
     fn library_stub_is_ready() {
         assert_eq!(CRATE_NAME, "cyclops");
-        assert_eq!(run(), 0);
+        let config = config::Config::try_parse_from([
+            "cyclops",
+            "fix it",
+            "--worktree",
+            "/tmp/wt",
+            "--model",
+            "claude-sonnet-4-7",
+        ])
+        .unwrap();
+        assert_eq!(run(config), 0);
     }
 }

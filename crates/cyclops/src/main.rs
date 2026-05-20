@@ -1,3 +1,4 @@
 fn main() {
-    std::process::exit(cyclops::run());
+    let config = cyclops::config::Config::parse();
+    std::process::exit(cyclops::run(config));
 }

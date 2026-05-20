@@ -1,6 +1,6 @@
 # Cyclops
 
-Cyclops is an early Rust coding-agent harness. The repository now has a minimal Cargo workspace and `cyclops` crate stub; agent behavior is still planned in `PLAN.md` and has not been implemented yet.
+Cyclops is an early Rust coding-agent harness. The repository has a minimal Cargo workspace and `cyclops` CLI parser; agent behavior is still planned in `PLAN.md` and has not been implemented yet.
 
 Start with:
 
@@ -34,10 +34,11 @@ Verified commands:
 cargo fmt --check
 cargo build --release
 cargo test
-./target/release/cyclops
+./target/release/cyclops --help
+./target/release/cyclops "fix it" --worktree /tmp/wt --model accounts/fireworks/routers/kimi-k2p6-turbo
 ```
 
-`./target/release/cyclops` is currently a T01 stub that exits 0 and emits no output.
+`./target/release/cyclops` currently parses CLI flags and exits 0 when required arguments are present. It does not run an agent loop yet.
 
 ## Repository Status
 
