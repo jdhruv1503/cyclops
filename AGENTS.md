@@ -93,6 +93,7 @@ These conventions are derived from `PLAN.md` and apply once the relevant files e
 - Do not edit `.git/` contents.
 - Do not edit `.claude/settings.local.json` unless the user explicitly asks to change local Claude permissions.
 - Do not create or commit generated session logs, tool outputs, build artifacts, or local scratch files.
+- Do track `Cargo.lock`; Cyclops is a binary workspace and lockfile changes are part of reproducible builds.
 - Do not rewrite `PLAN.md` wholesale; make narrow edits only when the requested task requires it.
 
 ## Done Criteria For Future Tasks

@@ -43,6 +43,7 @@ cargo test
 
 - Key design document: `PLAN.md`.
 - Current workspace members: `crates/cyclops`.
+- `Cargo.lock` is tracked for reproducible binary builds.
 - Planned implementation language: Rust.
 - Planned future workspace members: `crates/cyclops-web` and later `crates/cyclops-tui`.
 - Planned runtime integration: LiteLLM-proxied streaming chat completions.
