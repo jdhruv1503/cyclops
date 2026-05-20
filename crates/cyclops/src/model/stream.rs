@@ -1,4 +1,129 @@
 use bytes::{BufMut, Bytes, BytesMut};
+use serde::Deserialize;
+
+use crate::{CyclopsError, Result};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum StreamEvent {
+    TextDelta(String),
+    ToolCallStart { index: u32 },
+    ToolCallId { index: u32, id: String },
+    ToolCallName { index: u32, name: String },
+    ToolCallArgumentsDelta { index: u32, arguments: String },
+    FinishReason(String),
+    Usage(StreamUsage),
+    Done,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct StreamUsage {
+    pub prompt_tokens: u64,
+    pub completion_tokens: u64,
+    pub total_tokens: u64,
+}
+
+#[derive(Debug, Deserialize)]
+struct ChatCompletionChunk {
+    #[serde(default)]
+    choices: Vec<StreamChoice>,
+    usage: Option<StreamUsage>,
+}
+
+#[derive(Debug, Deserialize)]
+struct StreamChoice {
+    delta: Option<StreamDelta>,
+    finish_reason: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct StreamDelta {
+    content: Option<String>,
+    #[serde(default)]
+    tool_calls: Vec<ToolCallDelta>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ToolCallDelta {
+    index: u32,
+    id: Option<String>,
+    function: Option<ToolFunctionDelta>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ToolFunctionDelta {
+    name: Option<String>,
+    arguments: Option<String>,
+}
+
+pub fn parse_stream_frame(frame: &[u8]) -> Result<Vec<StreamEvent>> {
+    if frame == b"[DONE]" {
+        return Ok(vec![StreamEvent::Done]);
+    }
+
+    let chunk: ChatCompletionChunk = serde_json::from_slice(frame).map_err(|error| {
+        CyclopsError::Stream(format!(
+            "failed to parse chat completion stream chunk: {error}"
+        ))
+    })?;
+
+    let mut events = Vec::new();
+    for choice in chunk.choices {
+        if let Some(delta) = choice.delta {
+            if let Some(content) = delta.content {
+                if !content.is_empty() {
+                    events.push(StreamEvent::TextDelta(content));
+                }
+            }
+
+            for tool_call in delta.tool_calls {
+                let starts_tool_call = tool_call.id.is_some()
+                    || tool_call
+                        .function
+                        .as_ref()
+                        .is_some_and(|function| function.name.is_some());
+                if starts_tool_call {
+                    events.push(StreamEvent::ToolCallStart {
+                        index: tool_call.index,
+                    });
+                }
+
+                if let Some(id) = tool_call.id {
+                    events.push(StreamEvent::ToolCallId {
+                        index: tool_call.index,
+                        id,
+                    });
+                }
+
+                if let Some(function) = tool_call.function {
+                    if let Some(name) = function.name {
+                        events.push(StreamEvent::ToolCallName {
+                            index: tool_call.index,
+                            name,
+                        });
+                    }
+                    if let Some(arguments) = function.arguments {
+                        if !arguments.is_empty() {
+                            events.push(StreamEvent::ToolCallArgumentsDelta {
+                                index: tool_call.index,
+                                arguments,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(reason) = choice.finish_reason {
+            events.push(StreamEvent::FinishReason(reason));
+        }
+    }
+
+    if let Some(usage) = chunk.usage {
+        events.push(StreamEvent::Usage(usage));
+    }
+
+    Ok(events)
+}
 
 #[derive(Debug, Default)]
 pub struct SseFramer {
@@ -94,6 +219,79 @@ mod tests {
         }
 
         frames
+    }
+
+    fn parse_transcript(input: &[u8]) -> Vec<StreamEvent> {
+        feed_byte_by_byte(input)
+            .into_iter()
+            .flat_map(|frame| parse_stream_frame(&frame).unwrap())
+            .collect()
+    }
+
+    #[test]
+    fn parses_recorded_openai_shape_sse_into_stream_events() {
+        let transcript = br#"data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1710000000,"model":"test-model","choices":[{"index":0,"delta":{"role":"assistant","content":"Hel"},"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1710000000,"model":"test-model","choices":[{"index":0,"delta":{"content":"lo"},"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1710000000,"model":"test-model","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_read","type":"function","function":{"name":"read_file","arguments":""}}]},"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1710000000,"model":"test-model","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\"path\""}}]},"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1710000000,"model":"test-model","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":":\"src/main.rs\"}"}}]},"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1710000000,"model":"test-model","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}],"usage":null}
+
+data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1710000000,"model":"test-model","choices":[],"usage":{"prompt_tokens":11,"completion_tokens":7,"total_tokens":18}}
+
+data: [DONE]
+
+"#;
+
+        let events = parse_transcript(transcript);
+
+        assert_eq!(
+            events,
+            vec![
+                StreamEvent::TextDelta("Hel".to_string()),
+                StreamEvent::TextDelta("lo".to_string()),
+                StreamEvent::ToolCallStart { index: 0 },
+                StreamEvent::ToolCallId {
+                    index: 0,
+                    id: "call_read".to_string(),
+                },
+                StreamEvent::ToolCallName {
+                    index: 0,
+                    name: "read_file".to_string(),
+                },
+                StreamEvent::ToolCallArgumentsDelta {
+                    index: 0,
+                    arguments: "{\"path\"".to_string(),
+                },
+                StreamEvent::ToolCallArgumentsDelta {
+                    index: 0,
+                    arguments: ":\"src/main.rs\"}".to_string(),
+                },
+                StreamEvent::FinishReason("tool_calls".to_string()),
+                StreamEvent::Usage(StreamUsage {
+                    prompt_tokens: 11,
+                    completion_tokens: 7,
+                    total_tokens: 18,
+                }),
+                StreamEvent::Done,
+            ]
+        );
+    }
+
+    #[test]
+    fn reports_invalid_stream_chunk_as_stream_error() {
+        let error = parse_stream_frame(br#"{"choices":"not a list"}"#).unwrap_err();
+
+        assert!(matches!(
+            error.downcast_ref::<CyclopsError>(),
+            Some(CyclopsError::Stream(message))
+                if message.starts_with("failed to parse chat completion stream chunk:")
+        ));
     }
 
     #[test]
